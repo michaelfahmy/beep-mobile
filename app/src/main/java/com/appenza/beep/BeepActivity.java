@@ -184,6 +184,7 @@ public class BeepActivity extends AppCompatActivity {
             String uploadID = new MultipartUploadRequest(this, MainActivity.baseUrl + "/receiver/receive")
                     .addFileToUpload(filePath, "file", srcFile.getName(), "plain/text")
                     .setNotificationConfig(new UploadNotificationConfig())
+                    .addParameter("type", "BEEP")
                     .startUpload();
             Log.i(TAG, "Upload ID: " + uploadID);
         } catch (Exception e) {
@@ -196,8 +197,8 @@ public class BeepActivity extends AppCompatActivity {
         @Override
         public void run() {
             try {
-                sleep(200);
-                while (isRecording) {
+                while (isRecording && started) {
+                    sleep(200);
                     if (isPressed) {
                         bw.write(TONE);
                     } else {
