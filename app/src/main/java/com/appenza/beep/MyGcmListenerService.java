@@ -26,7 +26,6 @@ public class MyGcmListenerService extends GcmListenerService {
     public static final String NOTIFY = "NOTIFY";
 
     File soundFile;
-    String message;
 
     @Override
     public void onMessageReceived(String from, Bundle data) {
@@ -34,7 +33,7 @@ public class MyGcmListenerService extends GcmListenerService {
 
         String type = data.getString("type");
         String soundName = data.getString("sound");
-        message = data.getString("message");
+        String message = data.getString("message");
         soundFile = new File(MainActivity.dir + File.separator + soundName);
 
         assert type != null;
@@ -45,13 +44,13 @@ public class MyGcmListenerService extends GcmListenerService {
                 break;
             case NOTIFY:
                 Log.i(TAG, "Notify!");
-                sendNotification();
+                sendNotification(message);
                 break;
         }
 
     }
 
-    private void sendNotification() {
+    private void sendNotification(String message) {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
@@ -102,7 +101,7 @@ public class MyGcmListenerService extends GcmListenerService {
 
         @Override
         protected void onPostExecute(Void aVoid) {
-            sendNotification();
+            sendNotification("File test!");
         }
 
     }

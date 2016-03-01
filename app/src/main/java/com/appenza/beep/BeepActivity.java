@@ -22,17 +22,20 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Date;
 
 
 import android.media.SoundPool.*;
+
+import com.google.android.gms.games.internal.constants.TimeSpan;
 
 
 public class BeepActivity extends AppCompatActivity {
 
 
     private static final String TAG = "beep";
-    private static final String TONE = "file \'tone.wav\'" + "\n";
-    private static final String AMB = "file \'amb.wav\'" + "\n";
+    private static final String TONE = "file \'tone_50.wav\'" + "\n";
+    private static final String AMB = "file \'amb_50.wav\'" + "\n";
 
 
     File srcFile;
@@ -70,19 +73,21 @@ public class BeepActivity extends AppCompatActivity {
 
 
         beep = setSoundPool();
-        toneID = beep.load(this, R.raw.tone, 0);
+        toneID = beep.load(this, R.raw.tone50, 0);
 
 
         beepBtn = (Button) findViewById(R.id.beepBtn);
         beepBtn.setOnTouchListener(new View.OnTouchListener() {
+            long sprint;
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         beep.play(toneID, 1, 1, 0, -1, 1);
                         if (isRecording) {
-                            isPressed = true;
                             started = true;
+                            isPressed = true;
+                            sprint = System.currentTimeMillis();
                         } else
                             Snackbar.make(v, "Press Record!", Snackbar.LENGTH_SHORT).show();
                         break;
@@ -90,6 +95,9 @@ public class BeepActivity extends AppCompatActivity {
                     case MotionEvent.ACTION_UP:
                         beep.autoPause();
                         isPressed = false;
+
+                        sprint = System.currentTimeMillis() - sprint;
+                        Log.d(TAG, sprint + "");
                         break;
                 }
                 return true;
@@ -197,11 +205,13 @@ public class BeepActivity extends AppCompatActivity {
         @Override
         public void run() {
             try {
-                while (isRecording && started) {
-                    sleep(200);
+                while (isRecording) {
+                    sleep(50);
                     if (isPressed) {
+                        Log.d(TAG, "~~~~~~ TONE ~~~~~~");
                         bw.write(TONE);
                     } else {
+                        Log.d(TAG, "~~~~~~ AMB ~~~~~~~");
                         bw.write(AMB);
                     }
                 }
