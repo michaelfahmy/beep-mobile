@@ -1,5 +1,6 @@
 package com.appenza.beep;
 
+
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.SoundPool;
@@ -11,34 +12,43 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 
+
 import net.gotev.uploadservice.MultipartUploadRequest;
 import net.gotev.uploadservice.UploadNotificationConfig;
 import net.gotev.uploadservice.UploadService;
+
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
+
 import android.media.SoundPool.*;
 
 
 public class BeepActivity extends AppCompatActivity {
 
+
     private static final String TAG = "beep";
     private static final String TONE = "file \'tone.wav\'" + "\n";
     private static final String AMB = "file \'amb.wav\'" + "\n";
 
+
     File srcFile;
     String filePath;
+
 
     Button recordBtn, stopRecBtn, playBtn, stopPlayingBtn, beepBtn;
     SoundPool beep;
     int toneID;
     BufferedWriter bw;
 
+
     boolean isRecording = false;
     boolean isPressed = false;
+    boolean started = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,10 +56,12 @@ public class BeepActivity extends AppCompatActivity {
         setContentView(R.layout.activity_beep);
         UploadService.NAMESPACE = BuildConfig.APPLICATION_ID;
 
+
         recordBtn = (Button) findViewById(R.id.recordBtn);
         stopRecBtn = (Button) findViewById(R.id.stopRecBtn);
         recordBtn.setVisibility(View.VISIBLE);
         stopRecBtn.setVisibility(View.GONE);
+
 
 //        playBtn = (Button) findViewById(R.id.playBtn);
 //        stopPlayingBtn = (Button) findViewById(R.id.stopPlayingBtn);
@@ -60,6 +72,7 @@ public class BeepActivity extends AppCompatActivity {
         beep = setSoundPool();
         toneID = beep.load(this, R.raw.tone, 0);
 
+
         beepBtn = (Button) findViewById(R.id.beepBtn);
         beepBtn.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -67,32 +80,32 @@ public class BeepActivity extends AppCompatActivity {
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN:
                         beep.play(toneID, 1, 1, 0, -1, 1);
-                        isPressed = true;
-                        Snackbar.make(v, "Press Record!", Snackbar.LENGTH_SHORT).show();
+                        if (isRecording) {
+                            isPressed = true;
+                            started = true;
+                        } else
+                            Snackbar.make(v, "Press Record!", Snackbar.LENGTH_SHORT).show();
                         break;
+
                     case MotionEvent.ACTION_UP:
                         beep.autoPause();
                         isPressed = false;
                         break;
                 }
-
                 return true;
             }
         });
-
     }
 
+
     public SoundPool setSoundPool() {
-        AudioAttributes audioAttributes;
         SoundPool soundPool;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            audioAttributes = new AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build();
-
             soundPool = new Builder()
-                    .setAudioAttributes(audioAttributes)
+                    .setAudioAttributes(new AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build())
                     .build();
         } else {
             soundPool = new SoundPool(1, AudioManager.STREAM_MUSIC, R.raw.tone);
@@ -109,7 +122,7 @@ public class BeepActivity extends AppCompatActivity {
         isRecording = true;
 
         try {
-            srcFile = File.createTempFile("mylist", ".txt", MainActivity.dir);
+            srcFile = new File(MainActivity.dir, "beep.txt");
             filePath = srcFile.getAbsolutePath();
 
             bw = new BufferedWriter(new FileWriter(srcFile));
@@ -141,7 +154,6 @@ public class BeepActivity extends AppCompatActivity {
 //            Snackbar.make(view, "Record your tone first!", Snackbar.LENGTH_SHORT).show();
 //        else if (isRecording)
 //            Snackbar.make(view, "Still Recording!", Snackbar.LENGTH_SHORT).show();
-
 //        else {
 //            Log.d(TAG, "Playing tone...");
 //            playBtn.setVisibility(View.GONE);
@@ -161,7 +173,6 @@ public class BeepActivity extends AppCompatActivity {
 
 
     public void send(View view) {
-
         if (isRecording) {
             Snackbar.make(view, "Still recording...", Snackbar.LENGTH_SHORT).show();
             return;
@@ -170,16 +181,15 @@ public class BeepActivity extends AppCompatActivity {
         Snackbar.make(view, "Sending...", Snackbar.LENGTH_SHORT).show();
 
         try {
-            String uploadID = new MultipartUploadRequest(this, "http://10.0.0.24:3000/reciever/recieve")
+            String uploadID = new MultipartUploadRequest(this, MainActivity.baseUrl + "/receiver/receive")
                     .addFileToUpload(filePath, "file", srcFile.getName(), "plain/text")
                     .setNotificationConfig(new UploadNotificationConfig())
                     .startUpload();
-            Log.i(TAG, uploadID);
+            Log.i(TAG, "Upload ID: " + uploadID);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
 
 
     class recording extends Thread {

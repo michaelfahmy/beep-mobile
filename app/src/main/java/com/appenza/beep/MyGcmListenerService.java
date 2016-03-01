@@ -12,11 +12,9 @@ import android.util.Log;
 
 import com.google.android.gms.gcm.GcmListenerService;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 
@@ -24,32 +22,36 @@ import java.net.URLConnection;
 public class MyGcmListenerService extends GcmListenerService {
 
     private static final String TAG = "beep/GcmListener";
+    public static final String NEW_FILE = "NEW_FILE";
+    public static final String NOTIFY = "NOTIFY";
 
     File soundFile;
+    String message;
 
     @Override
     public void onMessageReceived(String from, Bundle data) {
-        String message = data.getString("message");
         Log.d(TAG, "From: " + from);
-        Log.d(TAG, "Message: " + message);
 
-        String downloadUrl = data.getString("downloadUrl");
-        String soundname = data.getString("soundName");
+        String type = data.getString("type");
+        String soundName = data.getString("sound");
+        message = data.getString("message");
+        soundFile = new File(MainActivity.dir + File.separator + soundName);
 
-        soundFile = new File(MainActivity.dir + File.separator + soundname);
-
-        if (downloadUrl != null) {
-            new DownloadFile().execute(downloadUrl, soundname);
+        assert type != null;
+        switch (type) {
+            case NEW_FILE:
+                Log.i(TAG, "Downloading new file...");
+                new DownloadFile().execute(data.getString("downloadUrl"));
+                break;
+            case NOTIFY:
+                Log.i(TAG, "Notify!");
+                sendNotification();
+                break;
         }
 
-        /**
-         * In some cases it may be useful to show a notification indicating to the user
-         * that a message was received.
-         */
-        sendNotification(message);
     }
 
-    private void sendNotification(String message) {
+    private void sendNotification() {
         Intent intent = new Intent(this, MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
@@ -68,33 +70,40 @@ public class MyGcmListenerService extends GcmListenerService {
 
     private class DownloadFile extends AsyncTask<String, Void, Void> {
 
-        private static final String LOG_TAG = "DownloadFile";
+        private static final String LOG_TAG = "beep/GcmListener";
 
         @Override
         protected Void doInBackground(String... params) {
             try {
+                Log.d(LOG_TAG, params[0]);
                 URL url = new URL(params[0]);
                 URLConnection connection = url.openConnection();
                 connection.connect();
 
-                InputStream input = new BufferedInputStream(url.openStream());
-                OutputStream output = new FileOutputStream(soundFile);
+                InputStream is = url.openStream();
+                FileOutputStream output = new FileOutputStream(soundFile);
 
                 int count;
                 byte data[] = new byte[1024];
-                while ((count = input.read(data)) != -1) {
+                while ((count = is.read(data)) != -1) {
                     output.write(data, 0, count);
                 }
 
+                is.close();
                 output.flush();
                 output.close();
-                input.close();
-                Log.d(LOG_TAG, "File Downloaded! xD");
+                Log.i(LOG_TAG, "File Downloaded! xD");
             } catch (Exception e) {
                 Log.e(LOG_TAG, "Error downloading file");
                 e.printStackTrace();
             }
             return null;
         }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            sendNotification();
+        }
+
     }
 }
