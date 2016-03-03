@@ -24,7 +24,7 @@ public class MainActivity extends Activity {
 
     private static final String TAG = "beep";
     private static final int PLAY_SERVICES_RESOLUTION_REQUEST = 9000;
-    public static final String baseUrl = "http://192.168.88.68:3000";
+    public static final String baseUrl = "http://192.168.8.101:3000";
     public static File dir;
 
     @Override
