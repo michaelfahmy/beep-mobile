@@ -122,11 +122,11 @@ public class VoiceActivity extends AppCompatActivity {
 
         try {
             String uploadID = new MultipartUploadRequest(this, MainActivity.baseUrl + "/receiver/receive")
-                    .addFileToUpload(filePath, "file", srcFile.getName(), "plain/text")
+                    .addFileToUpload(filePath, "file", srcFile.getName(), "video/3gpp")
                     .setNotificationConfig(new UploadNotificationConfig())
                     .addParameter("type", "VOICE")
                     .startUpload();
-            Log.i(TAG, uploadID);
+            Log.i(TAG, "Upload ID: " + uploadID);
         } catch (Exception e) {
             e.printStackTrace();
         }

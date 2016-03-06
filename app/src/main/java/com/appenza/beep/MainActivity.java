@@ -1,6 +1,7 @@
 package com.appenza.beep;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -27,15 +28,16 @@ public class MainActivity extends Activity {
     public static final String baseUrl = "http://192.168.8.101:3000";
     public static File dir;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        dir = new File(Environment.getExternalStorageDirectory(), "Beep/");
-        if (!dir.mkdirs() || !dir.isDirectory())
-            Log.d(TAG, "Directory exists!");
-
+        if (!checkConnection()) {
+            Toast.makeText(this, "Network is not available!", Toast.LENGTH_SHORT).show();
+            finish();
+        }
 
         BroadcastReceiver registrationReceiver = new BroadcastReceiver() {
             @Override
@@ -44,17 +46,18 @@ public class MainActivity extends Activity {
             }
         };
 
-        if (!checkConnection()) {
-            Toast.makeText(this, "Network is not available!", Toast.LENGTH_SHORT).show();
-            finish();
-        }
-
         if (checkPlayServices()) {
             LocalBroadcastManager.getInstance(this).registerReceiver(registrationReceiver, new IntentFilter(RegistrationIntentService.REGISTRATION_COMPLETE));
             // Start IntentService to register this application with GCM.
             Intent intent = new Intent(this, RegistrationIntentService.class);
             startService(intent);
         }
+
+
+        dir = new File(Environment.getExternalStorageDirectory(), "Beep/");
+        if (!dir.mkdirs() || !dir.isDirectory())
+            Log.d(TAG, "Directory exists!");
+
     }
 
     public void goToPeep(View view) {

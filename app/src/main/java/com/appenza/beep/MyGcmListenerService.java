@@ -56,6 +56,8 @@ public class MyGcmListenerService extends GcmListenerService {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_ONE_SHOT);
 
         NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
+                .setSmallIcon(R.drawable.ic_media_play)
+                .setContentTitle("Beep")
                 .setContentText(message)
                 .setSound(Uri.fromFile(soundFile))
                 .setContentIntent(pendingIntent);
